@@ -34,7 +34,6 @@
             background-color: black !important;
         }
         
-        /* Garante que o vídeo estique corretamente na tela cheia fake */
         .fullscreen-pwa video {
             height: 100% !important;
             object-fit: contain !important;
@@ -43,7 +42,7 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <!-- Textos de fundo (Ficarão ocultos sob o vídeo quando em tela cheia) -->
+    <!-- Textos de fundo -->
     <div class="w-full max-w-4xl text-center mb-6 z-0">
         <h1 class="text-2xl font-bold text-gray-200">Laboratório do Player</h1>
         <p class="text-sm text-gray-500 mt-2">O botão "Pular Abertura" aparecerá entre 0:10 e 0:30 para testes.</p>
@@ -61,43 +60,54 @@
             Pular Abertura
         </button>
 
-        <!-- BARRA DE CONTROLES INFERIOR -->
-        <div id="controlsBar" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 px-6 flex flex-col gap-3 transition-opacity duration-300 opacity-0 group-hover:opacity-100 z-30">
+        <!-- CONTROLES CENTRAIS (Apple Style) -->
+        <div id="centerControls" class="absolute inset-0 flex items-center justify-center gap-8 md:gap-12 z-30 transition-opacity duration-300 opacity-0 group-hover:opacity-100 pointer-events-none">
             
-            <!-- Barra de Progresso Arrastável -->
-            <div id="progressArea" class="w-full h-2 bg-gray-600/50 rounded cursor-pointer relative flex items-center group/progress progress-area py-2 -my-2">
-                <div class="absolute h-1.5 bg-gray-400/30 rounded w-full pointer-events-none"></div>
-                <div id="progressBar" class="absolute h-1.5 bg-[#E50914] rounded w-0 pointer-events-none"></div>
-                <div id="progressThumb" class="absolute h-4 w-4 bg-[#E50914] rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none transform -translate-x-1/2" style="left: 0%;"></div>
+            <!-- Voltar 10s -->
+            <button onclick="pularTempo(-10)" class="pointer-events-auto bg-black/40 hover:bg-black/60 backdrop-blur border border-white/10 text-white p-3 md:p-4 rounded-full transition">
+                <svg class="w-7 h-7 md:w-9 md:h-9" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/></svg>
+            </button>
+            
+            <!-- Play / Pause -->
+            <button id="btnPlayPauseCenter" onclick="togglePlay()" class="pointer-events-auto bg-black/50 hover:bg-black/70 backdrop-blur border border-white/10 text-white p-5 md:p-6 rounded-full transition">
+                <svg id="iconPlay" class="w-10 h-10 md:w-12 md:h-12 ml-1" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                <svg id="iconPause" class="w-10 h-10 md:w-12 md:h-12 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+            </button>
+
+            <!-- Avançar 10s -->
+            <button onclick="pularTempo(10)" class="pointer-events-auto bg-black/40 hover:bg-black/60 backdrop-blur border border-white/10 text-white p-3 md:p-4 rounded-full transition">
+                <svg class="w-7 h-7 md:w-9 md:h-9" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"/></svg>
+            </button>
+        </div>
+
+        <!-- BARRA DE CONTROLES INFERIOR -->
+        <div id="controlsBar" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-4 md:px-6 flex flex-col gap-3 transition-opacity duration-300 opacity-0 group-hover:opacity-100 z-30">
+            
+            <!-- Barra de Progresso Refinada -->
+            <div id="progressArea" class="w-full h-4 bg-transparent cursor-pointer relative flex items-center group/progress progress-area py-3 -my-3">
+                <!-- Linha de fundo translúcida -->
+                <div class="absolute h-[3px] bg-gray-500/40 rounded w-full pointer-events-none transition-all duration-200 group-hover/progress:h-1"></div>
+                <!-- Linha vermelha de progresso -->
+                <div id="progressBar" class="absolute h-[3px] bg-[#E50914] rounded w-0 pointer-events-none transition-all duration-200 group-hover/progress:h-1"></div>
+                <!-- Bolinha do progresso (Thumb) -->
+                <div id="progressThumb" class="absolute h-3 w-3 md:h-3.5 md:w-3.5 bg-[#E50914] rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none transform -translate-x-1/2 shadow" style="left: 0%;"></div>
             </div>
 
             <!-- Botões Inferiores -->
             <div class="flex justify-between items-center text-white mt-1">
                 
-                <div class="flex items-center gap-6">
-                    <button id="btnPlayPause" onclick="togglePlay()" class="hover:text-gray-300 transition">
-                        <svg id="iconPlay" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                        <svg id="iconPause" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                    </button>
-
-                    <button onclick="pularTempo(-10)" class="hover:text-gray-300 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/></svg>
-                    </button>
-                    
-                    <button onclick="pularTempo(10)" class="hover:text-gray-300 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"/></svg>
-                    </button>
-
-                    <div class="text-xs md:text-sm font-semibold tracking-wide font-mono pointer-events-none">
+                <div class="flex items-center gap-4">
+                    <!-- Display de Tempo -->
+                    <div class="text-[11px] md:text-sm font-semibold tracking-wide font-mono pointer-events-none text-gray-200">
                         <span id="timeCurrent">00:00</span> / <span id="timeTotal">00:00</span>
                     </div>
                 </div>
 
                 <!-- Botão de Tela Cheia -->
                 <div class="flex items-center">
-                    <button onclick="toggleFullscreen()" class="hover:text-gray-300 transition">
-                        <svg id="iconFull" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
-                        <svg id="iconExitFull" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 14h4v4m0-4l-5 5m15-5h-4v4m0-4l5 5M4 10h4V6m0 4l-5-5m15 5h-4V6m0 4l5-5"/></svg>
+                    <button onclick="toggleFullscreen()" class="hover:text-gray-300 transition p-1">
+                        <svg id="iconFull" class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                        <svg id="iconExitFull" class="w-5 h-5 md:w-6 md:h-6 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 14h4v4m0-4l-5 5m15-5h-4v4m0-4l5 5M4 10h4V6m0 4l-5-5m15 5h-4V6m0 4l5-5"/></svg>
                     </button>
                 </div>
             </div>
@@ -108,7 +118,7 @@
         const video = document.getElementById('videoElement');
         const container = document.getElementById('videoContainer');
         const controlsBar = document.getElementById('controlsBar');
-        const btnPlayPause = document.getElementById('btnPlayPause');
+        const centerControls = document.getElementById('centerControls');
         const iconPlay = document.getElementById('iconPlay');
         const iconPause = document.getElementById('iconPause');
         const timeCurrent = document.getElementById('timeCurrent');
@@ -147,9 +157,11 @@
             }
         }
         
-        // Impede que clicar na barra de controles pause o vídeo acidentalmente
+        // Impede que clicar na barra inferior ative eventos acidentais
         controlsBar.addEventListener('click', (e) => e.stopPropagation());
-        video.addEventListener('click', togglePlay);
+        
+        // ATENÇÃO: O evento de clique no vídeo para pausar/tocar foi removido.
+        // Agora só pausa/toca clicando no botão central.
 
         // Atualização Visual (Barra e Tempos)
         video.addEventListener('timeupdate', () => {
@@ -168,16 +180,13 @@
             }
         });
 
-        // ----------------------------------------------------
         // LÓGICA DE ARRASTAR A LINHA DO TEMPO (Scrubbing)
-        // ----------------------------------------------------
         function handleScrub(e) {
             const rect = progressArea.getBoundingClientRect();
-            // Verifica se é evento de toque (iPad) ou mouse
             const clientX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
             
             let pos = (clientX - rect.left) / rect.width;
-            pos = Math.max(0, Math.min(1, pos)); // Trava a posição entre 0% e 100%
+            pos = Math.max(0, Math.min(1, pos)); 
             
             progressBar.style.width = `${pos * 100}%`;
             progressThumb.style.left = `${pos * 100}%`;
@@ -185,30 +194,13 @@
             timeCurrent.textContent = formatTime(video.currentTime);
         }
 
-        // Eventos para Desktop (Mouse)
-        progressArea.addEventListener('mousedown', (e) => {
-            isScrubbing = true;
-            handleScrub(e);
-        });
-        window.addEventListener('mousemove', (e) => {
-            if (isScrubbing) handleScrub(e);
-        });
-        window.addEventListener('mouseup', () => {
-            isScrubbing = false;
-        });
+        progressArea.addEventListener('mousedown', (e) => { isScrubbing = true; handleScrub(e); });
+        window.addEventListener('mousemove', (e) => { if (isScrubbing) handleScrub(e); });
+        window.addEventListener('mouseup', () => { isScrubbing = false; });
 
-        // Eventos para iPad/iPhone (Toque)
-        progressArea.addEventListener('touchstart', (e) => {
-            isScrubbing = true;
-            handleScrub(e);
-        });
-        window.addEventListener('touchmove', (e) => {
-            if (isScrubbing) handleScrub(e);
-        });
-        window.addEventListener('touchend', () => {
-            isScrubbing = false;
-        });
-        // ----------------------------------------------------
+        progressArea.addEventListener('touchstart', (e) => { isScrubbing = true; handleScrub(e); });
+        window.addEventListener('touchmove', (e) => { if (isScrubbing) handleScrub(e); });
+        window.addEventListener('touchend', () => { isScrubbing = false; });
 
         // Função de Teste
         function pularTeste() {
@@ -219,9 +211,7 @@
             video.currentTime += segundos;
         }
 
-        // ----------------------------------------------------
-        // LÓGICA DO FALSO FULLSCREEN (Solução para PWA da Apple)
-        // ----------------------------------------------------
+        // TELA CHEIA FAKE
         function toggleFullscreen() {
             container.classList.toggle('fullscreen-pwa');
             const isFull = container.classList.contains('fullscreen-pwa');
@@ -241,12 +231,14 @@
         // Sumir controles se o mouse/toque ficar inativo
         function resetControlsTimeout() {
             controlsBar.style.opacity = '1';
+            centerControls.style.opacity = '1';
             container.classList.remove('hide-cursor');
             clearTimeout(hideControlsTimeout);
             
             if (!video.paused) {
                 hideControlsTimeout = setTimeout(() => {
                     controlsBar.style.opacity = '0';
+                    centerControls.style.opacity = '0';
                     container.classList.add('hide-cursor');
                 }, 3000);
             }
@@ -258,6 +250,7 @@
         video.addEventListener('pause', () => {
             clearTimeout(hideControlsTimeout);
             controlsBar.style.opacity = '1';
+            centerControls.style.opacity = '1';
             container.classList.remove('hide-cursor');
         });
 
