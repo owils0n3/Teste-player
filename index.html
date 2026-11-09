@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Player Lab - Teste de Tela Cheia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0a0a0a; color: white; -webkit-tap-highlight-color: transparent; }
+        
+        /* Oculta os controles nativos do iPad quando em tela cheia HTML5 */
+        video::-webkit-media-controls { display: none !important; }
+        
+        /* Esconde o cursor quando o mouse ficar parado (útil se testar no PC) */
+        .hide-cursor { cursor: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <div class="w-full max-w-4xl text-center mb-6">
+        <h1 class="text-2xl font-bold text-gray-200">Laboratório do Player</h1>
+        <p class="text-sm text-gray-500 mt-2">O botão "Pular Abertura" aparecerá entre 0:10 e 0:30 para testes.</p>
+    </div>
+
+    <!-- CAIXA PRINCIPAL DO PLAYER (Esta caixa vai para tela cheia) -->
+    <div id="videoContainer" class="relative w-full max-w-4xl bg-black rounded-lg overflow-hidden shadow-2xl group flex justify-center items-center">
+        
+        <!-- Vídeo puro sem a tag 'controls' -->
+        <video id="videoElement" class="w-full aspect-video" playsinline preload="metadata">
+            <source src="https://pub-e149375f04e14a7b90641b8b2411d353.r2.dev/ep01.mp4" type="video/mp4">
+        </video>
+
+        <!-- BOTÃO FLUTUANTE CUSTOMIZADO -->
+        <button id="btnPular" onclick="pularTeste()" class="hidden absolute bottom-24 right-8 bg-black/80 hover:bg-white hover:text-black border border-white/40 backdrop-blur text-white px-6 py-2 rounded font-bold transition-all z-40 drop-shadow-2xl">
+            Pular Abertura
+        </button>
+
+        <!-- BARRA DE CONTROLES INFERIOR -->
+        <div id="controlsBar" class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-4 px-6 flex flex-col gap-3 transition-opacity duration-300 opacity-0 group-hover:opacity-100 z-30">
+            
+            <!-- Barra de Progresso -->
+            <div id="progressArea" class="w-full h-1.5 bg-gray-600/50 rounded cursor-pointer relative flex items-center group/progress">
+                <div class="absolute h-full bg-gray-400/30 rounded w-full"></div>
+                <div id="progressBar" class="absolute h-full bg-[#E50914] rounded w-0 pointer-events-none"></div>
+                <div id="progressThumb" class="absolute h-4 w-4 bg-[#E50914] rounded-full opacity-0 group-hover/progress:opacity-100 transition-opacity pointer-events-none transform -translate-x-1/2" style="left: 0%;"></div>
+            </div>
+
+            <!-- Botões Inferiores -->
+            <div class="flex justify-between items-center text-white mt-1">
+                
+                <div class="flex items-center gap-6">
+                    <!-- Play / Pause -->
+                    <button id="btnPlayPause" onclick="togglePlay()" class="hover:text-gray-300 transition">
+                        <!-- SVG Play -->
+                        <svg id="iconPlay" class="w-7 h-7" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                        <!-- SVG Pause -->
+                        <svg id="iconPause" class="w-7 h-7 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    </button>
+
+                    <!-- Voltar 10s -->
+                    <button onclick="pularTempo(-10)" class="hover:text-gray-300 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"/></svg>
+                    </button>
+                    <!-- Avançar 10s -->
+                    <button onclick="pularTempo(10)" class="hover:text-gray-300 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.334-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.334-4z"/></svg>
+                    </button>
+
+                    <!-- Tempo -->
+                    <div class="text-xs md:text-sm font-semibold tracking-wide font-mono">
+                        <span id="timeCurrent">00:00</span> / <span id="timeTotal">00:00</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-5">
+                    <!-- PiP -->
+                    <button onclick="togglePiP()" class="hover:text-gray-300 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 19a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v14z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 11h6v4h-6v-4z"/></svg>
+                    </button>
+
+                    <!-- Tela Cheia -->
+                    <button onclick="toggleFullscreen()" class="hover:text-gray-300 transition">
+                        <svg id="iconFull" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                        <svg id="iconExitFull" class="w-6 h-6 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 14h4v4m0-4l-5 5m15-5h-4v4m0-4l5 5M4 10h4V6m0 4l-5-5m15 5h-4V6m0 4l5-5"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('videoElement');
+        const container = document.getElementById('videoContainer');
+        const controlsBar = document.getElementById('controlsBar');
+        const btnPlayPause = document.getElementById('btnPlayPause');
+        const iconPlay = document.getElementById('iconPlay');
+        const iconPause = document.getElementById('iconPause');
+        const timeCurrent = document.getElementById('timeCurrent');
+        const timeTotal = document.getElementById('timeTotal');
+        const progressArea = document.getElementById('progressArea');
+        const progressBar = document.getElementById('progressBar');
+        const progressThumb = document.getElementById('progressThumb');
+        const btnPular = document.getElementById('btnPular');
+        
+        let hideControlsTimeout;
+
+        // Formatação de Tempo (MM:SS)
+        function formatTime(seconds) {
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+        }
+
+        // Carregar MetaDados (Tempo Total)
+        video.addEventListener('loadedmetadata', () => {
+            timeTotal.textContent = formatTime(video.duration);
+        });
+
+        // Play / Pause
+        function togglePlay() {
+            if (video.paused) {
+                video.play();
+                iconPlay.classList.add('hidden');
+                iconPause.classList.remove('hidden');
+            } else {
+                video.pause();
+                iconPause.classList.add('hidden');
+                iconPlay.classList.remove('hidden');
+            }
+        }
+
+        // Clicar no vídeo para Play/Pause
+        video.addEventListener('click', togglePlay);
+
+        // Atualização de Tempo e Botão Pular
+        video.addEventListener('timeupdate', () => {
+            if(!video.duration) return;
+            
+            // Textos
+            timeCurrent.textContent = formatTime(video.currentTime);
+            
+            // Barra de Progresso
+            const percentage = (video.currentTime / video.duration) * 100;
+            progressBar.style.width = `${percentage}%`;
+            progressThumb.style.left = `${percentage}%`;
+
+            // Lógica do botão Pular (Mock de 10s a 30s)
+            if (video.currentTime >= 10 && video.currentTime <= 30) {
+                btnPular.classList.remove('hidden');
+            } else {
+                btnPular.classList.add('hidden');
+            }
+        });
+
+        // Clicar na barra para navegar
+        progressArea.addEventListener('click', (e) => {
+            const rect = progressArea.getBoundingClientRect();
+            const pos = (e.clientX - rect.left) / rect.width;
+            video.currentTime = pos * video.duration;
+        });
+
+        // Pular Teste
+        function pularTeste() {
+            video.currentTime = 30; // Pula pra marca de 30 segundos
+        }
+
+        // Avançar/Voltar
+        function pularTempo(segundos) {
+            video.currentTime += segundos;
+        }
+
+        // Picture-in-Picture
+        async function togglePiP() {
+            if (document.pictureInPictureElement) {
+                await document.exitPictureInPicture();
+            } else if (document.pictureInPictureEnabled) {
+                await video.requestPictureInPicture();
+            }
+        }
+
+        // Tela Cheia (No CONTAINER, não no vídeo)
+        function toggleFullscreen() {
+            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+            
+            if (!isFullscreen) {
+                if (container.requestFullscreen) {
+                    container.requestFullscreen();
+                } else if (container.webkitRequestFullscreen) { /* Safari */
+                    container.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        // Atualizar ícones de tela cheia
+        function updateFullscreenIcons() {
+            const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+            const iconFull = document.getElementById('iconFull');
+            const iconExitFull = document.getElementById('iconExitFull');
+            
+            if(isFullscreen) {
+                iconFull.classList.add('hidden');
+                iconExitFull.classList.remove('hidden');
+                container.classList.remove('rounded-lg');
+            } else {
+                iconExitFull.classList.add('hidden');
+                iconFull.classList.remove('hidden');
+                container.classList.add('rounded-lg');
+            }
+        }
+
+        document.addEventListener('fullscreenchange', updateFullscreenIcons);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenIcons);
+
+        // Sumir controles após 3 segundos
+        function resetControlsTimeout() {
+            controlsBar.style.opacity = '1';
+            container.classList.remove('hide-cursor');
+            clearTimeout(hideControlsTimeout);
+            
+            if (!video.paused) {
+                hideControlsTimeout = setTimeout(() => {
+                    controlsBar.style.opacity = '0';
+                    container.classList.add('hide-cursor');
+                }, 3000);
+            }
+        }
+
+        container.addEventListener('mousemove', resetControlsTimeout);
+        container.addEventListener('touchstart', resetControlsTimeout);
+        video.addEventListener('play', resetControlsTimeout);
+        video.addEventListener('pause', () => {
+            clearTimeout(hideControlsTimeout);
+            controlsBar.style.opacity = '1';
+            container.classList.remove('hide-cursor');
+        });
+
+    </script>
+</body>
+</html>
